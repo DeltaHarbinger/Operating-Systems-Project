@@ -24,6 +24,16 @@ public:
             processId), task(task), baseAddress(baseAddress), startTime(startTime), endTime(endTime), attempts(
             attempts), sleepTime(sleepTime) {}
 
+    Process() {
+        this -> processId = 0;
+        this -> task = 0;
+        this -> baseAddress = 0;
+        this -> startTime = std::chrono::system_clock::now();
+        this -> endTime = std::chrono::system_clock::now();
+        this -> attempts = 0;
+        this -> sleepTime = 0;
+    }
+
     int getProcessId() const {
         return processId;
     }

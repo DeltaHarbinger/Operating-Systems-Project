@@ -15,6 +15,33 @@ public:
 
     ProcessQueue(ProcessNode *front, ProcessNode *rear) : front(front), rear(rear) {}
 
+    void enqueue(Process * p){
+        ProcessNode * temp = new ProcessNode(p, rear, nullptr);
+        if(front == nullptr){
+            front = temp;
+            rear = temp;
+        } else {
+            rear -> setNextNode(temp);
+            rear = temp;
+        }
+    }
+
+    void dequeue(){
+        if(front != nullptr){
+            ProcessNode * temp = front;
+            if(front == rear){
+                front = nullptr;
+                rear = nullptr;
+                delete temp;
+            } else {
+                front = front -> getNextNode();
+                delete temp;
+            }
+        } else {
+            throw 1; //Exception of 1 means the queue was empty
+        }
+    }
+
     ProcessNode *getFront() const {
         return front;
     }
@@ -31,7 +58,7 @@ public:
         ProcessQueue::rear = rear;
     }
 
-    
+
 };
 
 
