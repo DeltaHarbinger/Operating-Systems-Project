@@ -15,6 +15,11 @@ public:
 
     ProcessQueue(ProcessNode *front, ProcessNode *rear) : front(front), rear(rear) {}
 
+    ProcessQueue() {
+        this -> front = nullptr;
+        this -> rear = nullptr;
+    }
+
     void enqueue(Process * p){
         ProcessNode * temp = new ProcessNode(p, rear, nullptr);
         if(front == nullptr){
@@ -56,6 +61,10 @@ public:
 
     void setRear(ProcessNode *rear) {
         ProcessQueue::rear = rear;
+    }
+
+    bool isEmpty(){
+        return front == nullptr;
     }
 
 

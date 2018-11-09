@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <chrono>
 #include "Resource.h"
 #include "ProcessQueue.h"
 
@@ -14,6 +15,76 @@ std::vector<Resource *> resourceList;
  * This is a tool that will generate random numbers
  */
 std::default_random_engine generator(unsigned(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+/*!
+ * Checks if a string has no tabs or spaces
+ */
+bool stringSafe(std::string s){
+    bool valid = true;
+    for(int x = 0; x < s.size() && valid; x++){
+        s[x] != '\t' ? false : valid = false;
+    }
+    return valid;
+}
+
+/*!
+ * Checks if a string only has letters
+ */
+bool stringOnlyHasLetters(std::string s){
+    bool valid = true;
+    if(s == ""){
+        return false;
+    }
+    for(int x = 0; x < s.size() && valid; x++){
+        isalpha(s[x]) ? false : valid = false;
+    }
+    return valid;
+}
+
+/*!
+ * Gets a string from the user. The string can be safe (no spaces or tabs)
+ * or it can be strics (only letters)
+ */
+std::string getString(std::string message, bool strict){
+    system("cls");
+    std::string input = "";
+    std::cout << message << std::endl << (strict ? ">> " : "> ");
+    std::cin.sync();
+    getline(std::cin, input);
+    if(input == ""){
+        input = "NA";
+    }
+    while(strict && !stringOnlyHasLetters(input)){
+        std::cout << std::endl << message << std::endl << "(Letters are the only accepted text here)" << std::endl << "> ";
+        std::cin.sync();
+        getline(std::cin, input);
+    }
+    while(!strict && !stringSafe(input)){
+        std::cout << message << std::endl << (strict ? ">> " : "> ");
+        std::cin.sync();
+        getline(std::cin, input);
+    }
+    return input;
+}
+
+/*!
+ * makes the user enter a number. It will make the user start over if
+ * an invalid input is given
+ */
+int getNumber(std::string message){
+    system("cls");
+    std::cout << message << std::endl << "# ";
+    int number;
+    std::cin >> number;
+    while(!std::cin){
+        std::cin.clear();
+        std::cin.ignore(256, '\n');
+        std::cout << std::endl << message << std::endl << "Please enter a valid value" << std::endl << "# ";
+        std::cin >> number;
+    }
+    return number;
+}
+
 
 
 /*!
@@ -31,6 +102,10 @@ int generateRandomNumber(){
  */
 bool sortCondition(Resource * a, Resource * b){
     return a -> getValue() < b -> getValue();
+}
+
+bool sortStartOrder(Process * a, Process * b){
+    return a -> getStartTime() < b -> getEndTime();
 }
 
 /*!
@@ -116,6 +191,64 @@ long listTotal(){
  * Main function
  */
 int main() {
+
+    std::vector<Process *> processes;
+
+    bool keepEntering = true;
+
+    int processId = 0;
+
+
+
+    while(keepEntering && processId < 30){
+
+        int task = getNumber("Enter the task you want to perform\n1) Add\n2)Remove\n3)Sort\n4)Search\n5)Total");
+        while(task > 5 || task < 1){
+            task = getNumber("PLEASE ENTER A VALID VALUE\nEnter the task you want to perform\n1) Add\n2)Remove\n3)Sort\n4)Search\n5)Total");
+        }
+
+
+        int startTime;
+        startTime = getNumber("Enter the time that the process is to start");
+        while(startTime < 0){
+            startTime = getNumber("PLEASE ENTER A VALID VALUE\nEnter the time that the process is to start");
+        }
+
+        int endTime;
+        endTime = getNumber("Enter the time that the process is to start");
+        while(endTime < 0){
+            endTime = getNumber("PLEASE ENTER A VALID VALUE\nEnter the time that the process is to start");
+        }
+
+        if(startTime >= endTime){
+            std::cout << "INVALID START AND END TIME ENTERED" << std::endl;
+            system("pause");
+            continue;
+        }
+
+        int remainingTime = endTime - startTime;
+
+        Process * p = new Process(processId, task, 0, startTime, endTime, remainingTime, 0, 0);
+
+        processes.push_back(p);
+
+        processId++;
+
+        if(processId >= 9){
+            system("cls");
+            std::cout << "Keep entering? (y/n)" << std::endl;
+            char option;
+            std::cin >> option;
+            if(option == 'y' || option == 'n'){
+                keepEntering = option == 'y';
+            }
+        }
+    }
+
+    std::sort(processes.begin(), processes.end(), sortStartOrder);
+
+    Process * processorA; //Round Robin
+    Process * processorB; //FIFO
 
     return 0;
 }

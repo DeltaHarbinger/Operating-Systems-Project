@@ -5,31 +5,30 @@
 #ifndef OPERATINGSYSTEMSPROJECT_PROCESS_H
 #define OPERATINGSYSTEMSPROJECT_PROCESS_H
 
-#include <chrono>
 #include <string>
 class Process {
 private:
     int processId;
-    int task;
+    int task; // 1: Add, 2: Remove, 3: Sort, 4: Retrieve, 5: List Total
     int baseAddress;
-    std::chrono::time_point<std::chrono::system_clock> startTime;
-    std::chrono::time_point<std::chrono::system_clock> endTime;
+    int startTime;
+    int endTime;
+    int remainingTime;
     int attempts;
     int sleepTime;
 
 public:
-    Process(int processId, int task, int baseAddress,
-            const std::chrono::time_point<std::chrono::system_clock> &startTime,
-            const std::chrono::time_point<std::chrono::system_clock> &endTime, int attempts, int sleepTime) : processId(
-            processId), task(task), baseAddress(baseAddress), startTime(startTime), endTime(endTime), attempts(
-            attempts), sleepTime(sleepTime) {}
+    Process(int processId, int task, int baseAddress, int startTime, int endTime, int remainingTime, int attempts,
+            int sleepTime) : processId(processId), task(task), baseAddress(baseAddress), startTime(startTime),
+                             endTime(endTime), remainingTime(remainingTime), attempts(attempts), sleepTime(sleepTime) {}
 
     Process() {
         this -> processId = 0;
         this -> task = 0;
         this -> baseAddress = 0;
-        this -> startTime = std::chrono::system_clock::now();
-        this -> endTime = std::chrono::system_clock::now();
+        this -> startTime = 0;
+        this -> endTime = 0;
+        this -> remainingTime = 0;
         this -> attempts = 0;
         this -> sleepTime = 0;
     }
@@ -58,19 +57,19 @@ public:
         Process::baseAddress = baseAddress;
     }
 
-    const std::chrono::time_point<std::chrono::system_clock> &getStartTime() const {
+    int getStartTime() const {
         return startTime;
     }
 
-    void setStartTime(const std::chrono::time_point<std::chrono::system_clock> &startTime) {
+    void setStartTime(int startTime) {
         Process::startTime = startTime;
     }
 
-    const std::chrono::time_point<std::chrono::system_clock> &getEndTime() const {
+    int getEndTime() const {
         return endTime;
     }
 
-    void setEndTime(const std::chrono::time_point<std::chrono::system_clock> &endTime) {
+    void setEndTime(int endTime) {
         Process::endTime = endTime;
     }
 
