@@ -89,6 +89,22 @@ public:
         Process::sleepTime = sleepTime;
     }
 
+    int getRemainingTime() const {
+        return remainingTime;
+    }
+
+    void setRemainingTime(int remainingTime) {
+        Process::remainingTime = remainingTime;
+    }
+
+    void reduceRemainingTime(int timePassed){
+        if(timePassed > this -> remainingTime){
+            remainingTime = 0;
+        }
+        else{
+            remainingTime -= timePassed;
+        }
+    }
 };
 
 

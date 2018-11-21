@@ -12,9 +12,64 @@
 std::vector<Resource *> resourceList;
 
 /*!
+ * List of all processes that will act on the list of resources
+ */
+std::vector<Process *> processes;
+
+/*!
+ * List of all processes completed processes
+ */
+ std::vector<Process *> completedProcesses;
+
+/*!
+ * Lock that states whether or not the list is locked from searchong,
+ * adding or deleting
+ */
+//bool listLock;
+
+/*!
+ * These are process pointers that represent the active processes in
+ * the processor.
+ */
+Process * processorA; //FIFO
+Process * processorB; //Round Robin
+
+/*!
  * This is a tool that will generate random numbers
  */
 std::default_random_engine generator(unsigned(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+/*!
+ * Number of seconds since system started processing processes
+ */
+unsigned int systemTime = 0;
+
+/*!
+ * Function that advances the "system" by one quantum, reduces
+ * the remaining time of active processes and moves finished processes
+ * to a list of completed processes
+ */
+void systemClockTick(){
+    systemTime += 1;
+    if(processorA != nullptr){
+        processorA -> reduceRemainingTime(1);
+        if(processorA -> getRemainingTime() == 0){
+            completedProcesses.push_back(processorA);
+            processorA = nullptr;
+        }
+    }
+    if(processorB != nullptr){
+        processorB -> reduceRemainingTime(1);
+        if(processorB -> getRemainingTime() == 0){
+            completedProcesses.push_back(processorB);
+            processorB = nullptr;
+        }
+    }
+}
+
+void assignProcesses(){
+
+}
 
 /*!
  * Checks if a string has no tabs or spaces
@@ -192,13 +247,9 @@ long listTotal(){
  */
 int main() {
 
-    std::vector<Process *> processes;
-
     bool keepEntering = true;
 
     int processId = 0;
-
-
 
     while(keepEntering && processId < 30){
 
@@ -235,20 +286,17 @@ int main() {
         processId++;
 
         if(processId >= 9){
-            system("cls");
-            std::cout << "Keep entering? (y/n)" << std::endl;
-            char option;
-            std::cin >> option;
-            if(option == 'y' || option == 'n'){
-                keepEntering = option == 'y';
+            char option = 0;
+            while(option != 'y' && option != 'n'){
+                system("cls");
+                std::cout << "Keep entering? (y/n)" << std::endl;
+                std::cin >> option;
             }
+            keepEntering = option == 'y';
         }
     }
 
     std::sort(processes.begin(), processes.end(), sortStartOrder);
-
-    Process * processorA; //Round Robin
-    Process * processorB; //FIFO
 
     return 0;
 }
