@@ -17,15 +17,20 @@ std::vector<Resource *> resourceList;
 std::vector<Process *> processes;
 
 /*!
+ * This is the queue that stores the next 5 processes available to run
+ */
+std::vector<Process *> readyQueue;
+
+/*!
  * List of all processes completed processes
  */
  std::vector<Process *> completedProcesses;
 
 /*!
- * Lock that states whether or not the list is locked from searchong,
+ * Lock that states whether or not the list is locked from searching,
  * adding or deleting
  */
-//bool listLock;
+
 
 /*!
  * These are process pointers that represent the active processes in
@@ -67,8 +72,71 @@ void systemClockTick(){
     }
 }
 
-void assignProcesses(){
+void loadReadyQueue(){
+    bool processesAvailable = true;
+    while(processesAvailable && readyQueue.size() < 5 && processes.size() > 0){
+        if(processes[0] -> getStartTime() <= systemTime){
+            readyQueue.push_back(processes[0]);
+        } else {
+            processesAvailable = false;
+        }
+    }
+}
 
+//int getHighestPriorityProcess(){
+//    int highestPriorityProcess = 0;
+//    for(int i = 0; i < readyQueue.size(); i++){
+//        switch (readyQueue[i] -> getTask()){
+//            case 1:
+//            case 2:
+//            case 3:
+//                if(readyQueue[highestPriorityProcess] -> getTask() > 3){
+//                    highestPriorityProcess = i;
+//                }
+//                break;
+//            default:
+//                break;
+//        }
+//        if(readyQueue[highestPriorityProcess] -> getTask() < 4){
+//            break;
+//        }
+//    }
+//    return highestPriorityProcess;
+//}
+
+//void assignProcesses(){
+//    loadReadyQueue();
+//    if(processorA == nullptr && processorB == nullptr){
+//        int processToAssign = getHighestPriorityProcess();
+//        processorA = readyQueue[processToAssign];
+//        readyQueue.erase(readyQueue.begin() + processToAssign);
+//        if(processorA -> getTask() > 3){
+//            int nextProcessToAssign = getHighestPriorityProcess();
+//            processorB = readyQueue[nextProcessToAssign];
+//            readyQueue.erase(readyQueue.begin() + nextProcessToAssign);
+//        }
+//    }
+//}
+
+
+
+int getOldestProcess(){
+    int oldestProcess = 0;
+    for(int i = 0; i < readyQueue.size(); i++){
+        if(readyQueue[i] -> getTask() < 4 &&  readyQueue[oldestProcess] -> getTask() > 3){
+            oldestProcess = i;
+        }
+        if(readyQueue[i] -> getStartTime() < readyQueue[oldestProcess] -> getStartTime()){
+            if(readyQueue[oldestProcess] -> getTask() < 4){
+                if(readyQueue[i] -> getTask() < 4){
+                    oldestProcess = i;
+                }
+            } else {
+                oldestProcess = i;
+            }
+        }
+    }
+    return oldestProcess;
 }
 
 /*!
@@ -155,10 +223,16 @@ int generateRandomNumber(){
  *  the value of resource 'b', resource a comes
  *  first
  */
-bool sortCondition(Resource * a, Resource * b){
+bool sortResourceCondition(Resource *a, Resource *b){
     return a -> getValue() < b -> getValue();
 }
 
+/*!  This is the function that tells the sorter
+ *  how to sort the processes. If you have two
+ *  processes, if the start time of process'a' is smaller than
+ *  the start time of process 'b', process a comes
+ *  first
+ */
 bool sortStartOrder(Process * a, Process * b){
     return a -> getStartTime() < b -> getEndTime();
 }
@@ -228,7 +302,7 @@ bool removeValue(int key){
  * order by resource value.
  */
 void sortList(){
-    std::sort(resourceList.begin(), resourceList.end(), sortCondition);
+    std::sort(resourceList.begin(), resourceList.end(), sortResourceCondition);
 }
 
 /*!
