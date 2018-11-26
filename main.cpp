@@ -36,8 +36,8 @@ std::vector<Process *> readyQueue;
  * These are process pointers that represent the active processes in
  * the processor.
  */
-Process * processorA; //FIFO
-Process * processorB; //Round Robin
+Process * processorA = nullptr; //FIFO
+Process * processorB = nullptr; //Round Robin
 
 /*!
  * This is a tool that will generate random numbers
@@ -50,6 +50,149 @@ std::default_random_engine generator(unsigned(std::chrono::steady_clock::now().t
 unsigned int systemTime = 0;
 
 /*!
+ * This function will return a random integer. (within the valid range of integers)
+ */
+int generateRandomNumber(){
+    return generator();
+}
+
+/*!
+ * This function will search the list for a key
+ */
+Resource * searchList(int key){
+    if(resourceList.empty()){
+        return nullptr;
+    }
+    bool found = false;
+    int i = 0;
+    while(i < resourceList.size() && !found){
+        if(resourceList[i] -> getKey() == key){
+            found = true;
+        }
+        i++;
+    }
+    if(found){
+        return resourceList[i - 1];
+    } else {
+        return nullptr;
+    }
+}
+
+/*!
+ * This is a function that inserts a new resource
+ * into the list when given the value of the resource.
+ */
+void insertValue(int value){
+    int key = generateRandomNumber();
+    while(searchList(key) != nullptr){
+        key = generateRandomNumber();
+    }
+    resourceList.push_back(new Resource(key, value));
+}
+
+/*!  This is the function that tells the sorter
+ *  how to sort the list. If you have two resources,
+ *  if the value of resource 'a' is smaller than
+ *  the value of resource 'b', resource a comes
+ *  first
+ */
+bool sortResourceCondition(Resource *a, Resource *b){
+    return a -> getValue() < b -> getValue();
+}
+
+/*!
+ * This function will sort the resource list in ascending
+ * order by resource value.
+ */
+void sortList(){
+    std::sort(resourceList.begin(), resourceList.end(), sortResourceCondition);
+}
+
+/*!
+ * This is a function that removes a resource from the
+ * resource list. It takes the key of the resource to
+ * be removed, searches for it and deletes it if found.
+ */
+bool removeValue(int key){
+    if(resourceList.empty()){
+        return false;
+    }
+    bool found = false;
+    int i = 0;
+    while(i < resourceList.size() && !found){
+        if(resourceList[i] -> getKey() == key){
+            found = true;
+        }
+        i++;
+    }
+    if(found){
+        resourceList.erase(resourceList.begin() + i - 1);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*!
+ * This function will return the sum of all of the values in the list
+ */
+long long listTotal(){
+    long long total = 0;
+    for(Resource * r : resourceList){
+        total += r -> getValue();
+    }
+    return total;
+}
+
+/*!
+ * Performs the task of a specified process on the list
+ */
+void performAction(Process * p){
+    switch(p -> getTask()){
+        case 1: {
+            insertValue(generateRandomNumber());
+            std::cout << "Inserted value" << std::endl;
+            break;
+        }
+        case 2: {
+            int keyToRemove;
+            if (resourceList.size() > 0) {
+                keyToRemove = generateRandomNumber() % resourceList.size();
+            } else {
+                keyToRemove = 0;
+            }
+            bool success = removeValue(resourceList[keyToRemove]->getKey());
+            std::cout << (success ? "Key removed" : "Key not removed") << std::endl;
+            break;
+        }
+        case 3: {
+            sortList();
+            std::cout << "Sorted" << std::endl;
+            break;
+        }
+        case 4: {
+            int keyToSearch;
+            if(resourceList.size() > 0){
+                keyToSearch = generateRandomNumber() % resourceList.size();
+            } else {
+                keyToSearch = 0;
+            }
+            Resource * result = searchList(keyToSearch);
+            if(result != nullptr){
+                std::cout << result -> getValue() << std::endl;
+            } else {
+                std::cout << "Value not found" << std::endl;
+            }
+            break;
+        }
+        case 5: {
+            long long total = listTotal();
+            std::cout << "The total is: " << total << std::endl;
+        }
+    }
+}
+
+/*!
  * Function that advances the "system" by one quantum, reduces
  * the remaining time of active processes and moves finished processes
  * to a list of completed processes
@@ -59,6 +202,8 @@ void systemClockTick(){
     if(processorA != nullptr){
         processorA -> reduceRemainingTime(1);
         if(processorA -> getRemainingTime() == 0){
+            performAction(processorA);
+            processorA -> setEndTime(systemTime);
             completedProcesses.push_back(processorA);
             processorA = nullptr;
         }
@@ -66,6 +211,8 @@ void systemClockTick(){
     if(processorB != nullptr){
         processorB -> reduceRemainingTime(1);
         if(processorB -> getRemainingTime() == 0){
+            performAction(processorB);
+            processorB -> setEndTime(systemTime);
             completedProcesses.push_back(processorB);
             processorB = nullptr;
         }
@@ -74,55 +221,28 @@ void systemClockTick(){
 
 void loadReadyQueue(){
     bool processesAvailable = true;
-    while(processesAvailable && readyQueue.size() < 5 && processes.size() > 0){
+    int assignedProcessCount = 0;
+    if(processorA != nullptr){
+        assignedProcessCount += 1;
+    }
+    if(processorB != nullptr){
+        assignedProcessCount += 1;
+    }
+    while(processesAvailable && readyQueue.size() < 5 - assignedProcessCount && processes.size() > 0){
         if(processes[0] -> getStartTime() <= systemTime){
             readyQueue.push_back(processes[0]);
+            processes.erase(processes.begin());
         } else {
             processesAvailable = false;
         }
     }
 }
 
-//int getHighestPriorityProcess(){
-//    int highestPriorityProcess = 0;
-//    for(int i = 0; i < readyQueue.size(); i++){
-//        switch (readyQueue[i] -> getTask()){
-//            case 1:
-//            case 2:
-//            case 3:
-//                if(readyQueue[highestPriorityProcess] -> getTask() > 3){
-//                    highestPriorityProcess = i;
-//                }
-//                break;
-//            default:
-//                break;
-//        }
-//        if(readyQueue[highestPriorityProcess] -> getTask() < 4){
-//            break;
-//        }
-//    }
-//    return highestPriorityProcess;
-//}
-
-//void assignProcesses(){
-//    loadReadyQueue();
-//    if(processorA == nullptr && processorB == nullptr){
-//        int processToAssign = getHighestPriorityProcess();
-//        processorA = readyQueue[processToAssign];
-//        readyQueue.erase(readyQueue.begin() + processToAssign);
-//        if(processorA -> getTask() > 3){
-//            int nextProcessToAssign = getHighestPriorityProcess();
-//            processorB = readyQueue[nextProcessToAssign];
-//            readyQueue.erase(readyQueue.begin() + nextProcessToAssign);
-//        }
-//    }
-//}
-
-
-
 int getOldestProcess(){
     int oldestProcess = 0;
+    bool found = false;
     for(int i = 0; i < readyQueue.size(); i++){
+        found = true;
         if(readyQueue[i] -> getTask() < 4 &&  readyQueue[oldestProcess] -> getTask() > 3){
             oldestProcess = i;
         }
@@ -136,7 +256,98 @@ int getOldestProcess(){
             }
         }
     }
-    return oldestProcess;
+    return found ? oldestProcess : -1;
+}
+
+int getOldestNonPriorityProcess(){
+    int oldestNonPriorityProcess = -1;
+    bool found = false;
+    for(int x = 0; x < readyQueue.size(); x++){
+        if(oldestNonPriorityProcess == -1 && readyQueue[x] -> getTask() > 3){
+            oldestNonPriorityProcess = x;
+        } else {
+            if(readyQueue[x] -> getTask() > 3 && readyQueue[x] -> getStartTime() < readyQueue[oldestNonPriorityProcess] -> getStartTime()){
+                oldestNonPriorityProcess = x;
+            }
+        }
+    }
+    return found ? oldestNonPriorityProcess : -1;
+}
+
+/*!
+ * Assigns processes in the ready queue to processors based on priority and order of arrival
+ */
+void assignProcesses(){
+    loadReadyQueue();
+    int processToAssign = getOldestProcess();
+    if(readyQueue.size() > 0){
+        if(processorA == nullptr && processorB == nullptr) {
+            processorA = readyQueue[processToAssign];
+            readyQueue.erase(readyQueue.begin() + processToAssign);
+            processorA -> addAttempt();
+            if (processorA->getTask() > 3) {
+                int nextProcessToAssign = getOldestProcess();
+                if(nextProcessToAssign != -1){
+                    processorB = readyQueue[nextProcessToAssign];
+                    processorB -> addAttempt();
+                    readyQueue.erase(readyQueue.begin() + nextProcessToAssign);
+                }
+            }
+        }
+        if(processorA != nullptr && processorB == nullptr){
+            if(processorA -> getTask() > 3){
+                if(processorB == nullptr){
+                    int nextProcessToAssign = getOldestNonPriorityProcess();
+                    if(nextProcessToAssign != -1){
+                        processorB = readyQueue[processToAssign];
+                        processorB -> addAttempt();
+                        readyQueue.erase(readyQueue.begin() + nextProcessToAssign);
+                    }
+                }
+            }
+        }
+        if(processorA == nullptr && processorB != nullptr){
+            if(processorB -> getTask() > 3){
+                processToAssign = getOldestNonPriorityProcess();
+                if(processToAssign != -1){
+                    processorA = readyQueue[processToAssign];
+                    processorA -> addAttempt();
+                    readyQueue.erase(readyQueue.begin() + processToAssign);
+                } else {
+                    readyQueue.push_back(processorB);
+                    processorB = readyQueue[processToAssign];
+                    processorA -> addAttempt();
+                    readyQueue.erase(readyQueue.begin() + processToAssign);
+                }
+            }
+        }
+//        if(processorA != nullptr && processorB != nullptr){
+//            if(processorA -> getTask() > 3){
+//                if(readyQueue[processToAssign] -> getTask() <= 3){
+//
+//                }
+//            }
+//        }
+
+
+//        } else {
+//            if(processorA -> getTask() > 3){
+//                if(processorB == nullptr){
+//                    if(readyQueue[processToAssign] -> getTask() > 3){
+//                        processorB = readyQueue[processToAssign];
+//                        readyQueue.erase(readyQueue.begin() + processToAssign);
+//                    } else {
+//                        readyQueue.push_back(processorA);
+//                        processorA -> addAttempt();
+//                        processorA = readyQueue[processToAssign];
+//                        readyQueue.erase(readyQueue.begin() + processToAssign);
+//                    }
+//                }
+//            }
+//
+//        }
+
+    }
 }
 
 /*!
@@ -210,22 +421,7 @@ int getNumber(std::string message){
 
 
 
-/*!
- * This function will return a random integer. (within the valid range of integers)
- */
-int generateRandomNumber(){
-    return generator();
-}
 
-/*!  This is the function that tells the sorter
- *  how to sort the list. If you have two resources,
- *  if the value of resource 'a' is smaller than
- *  the value of resource 'b', resource a comes
- *  first
- */
-bool sortResourceCondition(Resource *a, Resource *b){
-    return a -> getValue() < b -> getValue();
-}
 
 /*!  This is the function that tells the sorter
  *  how to sort the processes. If you have two
@@ -237,90 +433,8 @@ bool sortStartOrder(Process * a, Process * b){
     return a -> getStartTime() < b -> getEndTime();
 }
 
-/*!
- * This function will search the list for a key
- */
-Resource * searchList(int key){
-    if(resourceList.empty()){
-        return nullptr;
-    }
-    bool found = false;
-    int i = 0;
-    while(i < resourceList.size() && !found){
-        if(resourceList[i] -> getKey() == key){
-            found = true;
-        }
-        i++;
-    }
-    if(found){
-        return resourceList[i - 1];
-    } else {
-        return nullptr;
-    }
-}
 
-/*!
- * This is a function that inserts a new resource
- * into the list when given the value of the resource.
- */
-void insertValue(int value){
-    int key = generateRandomNumber();
-    while(searchList(key) != nullptr){
-        std::cout << (resourceList.size()) << std::endl;
-        key = generateRandomNumber();
-    }
-    resourceList.push_back(new Resource(key, value));
-}
-
-/*!
- * This is a function that removes a resource from the
- * resource list. It takes the key of the resource to
- * be removed, searches for it and deletes it if found.
- */
-bool removeValue(int key){
-    if(resourceList.empty()){
-        return false;
-    }
-    bool found = false;
-    int i = 0;
-    while(i < resourceList.size() && !found){
-        if(resourceList[i] -> getKey() == key){
-            found = true;
-        }
-        i++;
-    }
-    if(found){
-        resourceList.erase(resourceList.begin() + i - 1);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-/*!
- * This function will sort the resource list in ascending
- * order by resource value.
- */
-void sortList(){
-    std::sort(resourceList.begin(), resourceList.end(), sortResourceCondition);
-}
-
-/*!
- * This function will return the sum of all of the values in the list
- */
-long listTotal(){
-    long total = 0;
-    for(Resource * r : resourceList){
-        total += r -> getValue();
-    }
-    return total;
-}
-
-/*!
- * Main function
- */
-int main() {
-
+void getProcesses(){
     bool keepEntering = true;
 
     int processId = 0;
@@ -339,27 +453,20 @@ int main() {
             startTime = getNumber("PLEASE ENTER A VALID VALUE\nEnter the time that the process is to start");
         }
 
-        int endTime;
-        endTime = getNumber("Enter the time that the process is to start");
-        while(endTime < 0){
-            endTime = getNumber("PLEASE ENTER A VALID VALUE\nEnter the time that the process is to start");
+        int duration;
+        duration = getNumber("Enter the duration of the process");
+        while(duration < 0){
+            duration = getNumber("PLEASE ENTER A VALID VALUE\nEnter the time that the process is to start");
         }
 
-        if(startTime >= endTime){
-            std::cout << "INVALID START AND END TIME ENTERED" << std::endl;
-            system("pause");
-            continue;
-        }
 
-        int remainingTime = endTime - startTime;
-
-        Process * p = new Process(processId, task, 0, startTime, endTime, remainingTime, 0, 0);
+        Process * p = new Process(processId, task, 0, startTime, 0, duration, 0, 0);
 
         processes.push_back(p);
 
         processId++;
 
-        if(processId >= 9){
+        if(processId > 9){
             char option = 0;
             while(option != 'y' && option != 'n'){
                 system("cls");
@@ -369,8 +476,25 @@ int main() {
             keepEntering = option == 'y';
         }
     }
+}
+
+/*!
+ * Main function
+ */
+int main() {
+
+    getProcesses();
 
     std::sort(processes.begin(), processes.end(), sortStartOrder);
+
+    while(readyQueue.size() > 0 || processes.size() > 0 || processorA != nullptr || processorB != nullptr){
+        assignProcesses();
+        systemClockTick();
+    }
+
+    for(Process * p : completedProcesses){
+        std::cout << p -> toString() << std::endl;
+    }
 
     return 0;
 }

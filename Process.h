@@ -99,11 +99,19 @@ public:
 
     void reduceRemainingTime(int timePassed){
         if(timePassed > this -> remainingTime){
-            remainingTime = 0;
+            this -> remainingTime = 0;
         }
         else{
-            remainingTime -= timePassed;
+            this -> remainingTime -= timePassed;
         }
+    }
+
+    void addAttempt(){
+        this -> attempts += 1;
+    }
+
+    std::string toString(){
+        return "ID: " + std::to_string(processId) + "\tTask: " + std::to_string(task) + "\tStart Time: " + std::to_string(startTime) + "\tEnd Time: " + std::to_string(endTime) + "\tAttempts: " + std::to_string(attempts);
     }
 };
 
