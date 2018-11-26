@@ -260,19 +260,21 @@ int getOldestProcess(){
     return found ? oldestProcess : -1;
 }
 
-int getOldestNonPriorityProcess(){
-    int oldestNonPriorityProcess = -1;
+
+
+int getShortestNonPriorityProcess(){
+    int shortestNonPriorityProcess = -1;
     bool found = false;
     for(int x = 0; x < readyQueue.size(); x++){
-        if(oldestNonPriorityProcess == -1 && readyQueue[x] -> getTask() > 3){
-            oldestNonPriorityProcess = x;
+        if(shortestNonPriorityProcess == -1 && readyQueue[x] -> getTask() > 3){
+            shortestNonPriorityProcess = x;
         } else {
-            if(readyQueue[x] -> getTask() > 3 && readyQueue[x] -> getStartTime() < readyQueue[oldestNonPriorityProcess] -> getStartTime()){
-                oldestNonPriorityProcess = x;
+            if(readyQueue[x] -> getTask() > 3 && readyQueue[x] -> getRemainingTime() < readyQueue[shortestNonPriorityProcess] -> getRemainingTime()){
+                shortestNonPriorityProcess = x;
             }
         }
     }
-    return found ? oldestNonPriorityProcess : -1;
+    return found ? shortestNonPriorityProcess : -1;
 }
 
 /*!
@@ -298,9 +300,9 @@ void assignProcesses(){
         if(processorA != nullptr && processorB == nullptr){
             if(processorA -> getTask() > 3){
                 if(processorB == nullptr){
-                    int nextProcessToAssign = getOldestNonPriorityProcess();
+                    int nextProcessToAssign = getShortestNonPriorityProcess();
                     if(nextProcessToAssign != -1){
-                        processorB = readyQueue[processToAssign];
+                        processorB = readyQueue[nextProcessToAssign];
                         processorB -> addAttempt();
                         readyQueue.erase(readyQueue.begin() + nextProcessToAssign);
                     }
@@ -308,46 +310,21 @@ void assignProcesses(){
             }
         }
         if(processorA == nullptr && processorB != nullptr){
-            if(processorB -> getTask() > 3){
-                processToAssign = getOldestNonPriorityProcess();
-                if(processToAssign != -1){
-                    processorA = readyQueue[processToAssign];
-                    processorA -> addAttempt();
-                    readyQueue.erase(readyQueue.begin() + processToAssign);
-                } else {
-                    readyQueue.push_back(processorB);
-                    processorB = readyQueue[processToAssign];
-                    processorA -> addAttempt();
-                    readyQueue.erase(readyQueue.begin() + processToAssign);
+            if(processorB -> getTask() > 3) {
+                if (processToAssign != -1) {
+                    if(readyQueue[processToAssign] -> getTask() > 3) {
+                        processorA = readyQueue[processToAssign];
+                        processorA->addAttempt();
+                        readyQueue.erase(readyQueue.begin() + processToAssign);
+                    } else {
+                        processorA = readyQueue[processToAssign];
+                        processorA -> addAttempt();
+                        readyQueue.push_back(processorB);
+                        processorB = nullptr;
+                    }
                 }
             }
         }
-//        if(processorA != nullptr && processorB != nullptr){
-//            if(processorA -> getTask() > 3){
-//                if(readyQueue[processToAssign] -> getTask() <= 3){
-//
-//                }
-//            }
-//        }
-
-
-//        } else {
-//            if(processorA -> getTask() > 3){
-//                if(processorB == nullptr){
-//                    if(readyQueue[processToAssign] -> getTask() > 3){
-//                        processorB = readyQueue[processToAssign];
-//                        readyQueue.erase(readyQueue.begin() + processToAssign);
-//                    } else {
-//                        readyQueue.push_back(processorA);
-//                        processorA -> addAttempt();
-//                        processorA = readyQueue[processToAssign];
-//                        readyQueue.erase(readyQueue.begin() + processToAssign);
-//                    }
-//                }
-//            }
-//
-//        }
-
     }
 }
 
