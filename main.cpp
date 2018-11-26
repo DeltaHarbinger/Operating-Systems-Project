@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <random>
 #include <chrono>
+#include <fstream>
 #include "Resource.h"
 #include "ProcessQueue.h"
 
@@ -492,9 +493,18 @@ int main() {
         systemClockTick();
     }
 
+    std::string report = "";
+
     for(Process * p : completedProcesses){
-        std::cout << p -> toString() << std::endl;
+        report = report +  (p -> toString()) + "\n";
     }
+
+    std::cout << report;
+
+    std::ofstream fileWriter;
+    fileWriter.open("report.txt");
+    fileWriter << report;
+    fileWriter.close();
 
     return 0;
 }
